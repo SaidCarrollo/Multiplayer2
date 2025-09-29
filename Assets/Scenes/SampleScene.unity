@@ -649,6 +649,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21fa0e33c1d4b764aac0134221d2c3de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerPrefab: {fileID: 8230766273605467533, guid: ffd110f01222ea943bc4b2bd2524f1d9, type: 3}
 --- !u!4 &292612823
 Transform:
   m_ObjectHideFlags: 0
@@ -979,6 +980,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6794702cbd929f9479e585476f0cb252, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  readyButton: {fileID: 1173828270}
+  startGameButton: {fileID: 904778341}
+  playerPanels:
+  - {fileID: 580944048}
+  - {fileID: 1249898775}
+  - {fileID: 2000248162}
+  - {fileID: 1984913493}
+  - {fileID: 441586185}
 --- !u!114 &392309433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1311,6 +1320,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb922c08f2e78141990b1a00e4462f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerNameText: {fileID: 250611761}
+  readyCheckmark: {fileID: 1122217509}
 --- !u!114 &441586186
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1542,6 +1553,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92e3739c2f0feaa42bf1fbb6f3808f7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!4 &558440180
 Transform:
   m_ObjectHideFlags: 0
@@ -1609,6 +1621,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb922c08f2e78141990b1a00e4462f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerNameText: {fileID: 122538401}
+  readyCheckmark: {fileID: 1203723763}
 --- !u!114 &580944049
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2008,6 +2022,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30a58c335a688d4448078ffc7d7f0e06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  namePanel: {fileID: 223654605}
+  lobbyPanel: {fileID: 392309430}
+  nameInputField: {fileID: 1412563757}
+  confirmButton: {fileID: 2143044127}
+  database: {fileID: 11400000, guid: 6a1ad575c9307264685ef945d9ed7e89, type: 2}
+  optionTexts:
+  - {fileID: 1177120905}
+  - {fileID: 1628218806}
+  - {fileID: 500573873}
+  nextButtons:
+  - {fileID: 1055345353}
+  - {fileID: 229515525}
+  - {fileID: 1719152371}
+  previousButtons:
+  - {fileID: 378389269}
+  - {fileID: 432193204}
+  - {fileID: 700512932}
 --- !u!4 &804521192
 Transform:
   m_ObjectHideFlags: 0
@@ -3767,6 +3798,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb922c08f2e78141990b1a00e4462f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerNameText: {fileID: 931285339}
+  readyCheckmark: {fileID: 2080872121}
 --- !u!114 &1249898776
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5214,6 +5247,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb922c08f2e78141990b1a00e4462f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerNameText: {fileID: 2020650500}
+  readyCheckmark: {fileID: 658349682}
 --- !u!114 &1984913494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5440,6 +5475,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb922c08f2e78141990b1a00e4462f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerNameText: {fileID: 1998353757}
+  readyCheckmark: {fileID: 2073487667}
 --- !u!114 &2000248163
 MonoBehaviour:
   m_ObjectHideFlags: 0
