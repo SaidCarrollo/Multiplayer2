@@ -1,8 +1,8 @@
-// NameSelector.cs
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 public class NameSelector : MonoBehaviour
 {
@@ -18,40 +18,96 @@ public class NameSelector : MonoBehaviour
     [SerializeField] private List<Button> nextButtons;
     [SerializeField] private List<Button> previousButtons;
 
-    private List<int> currentSelections;
+    [Header("Visual Feedback")]
+    [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private Transform previewParent;
 
-    void Start()
+    private List<int> currentSelections;
+    private CharacterCustomizer previewCustomizer;
+
+    void Awake()
     {
         if (database == null)
         {
-            Debug.LogError("¡CONFIGURACIÓN CRÍTICA FALTANTE! El campo 'Database' del NameSelector no tiene ningún CustomizationDatabaseSO asignado. Arrástralo en el Inspector.", this.gameObject);
-            confirmButton.interactable = false; // Desactivar para prevenir errores
+            Debug.LogError("¡La base de datos de personalización no está asignada en el Inspector!", this);
             return;
         }
-        if (database.customizationParts.Count == 0)
-        {
-            Debug.LogError("¡CONFIGURACIÓN CRÍTICA FALTANTE! El asset 'CustomizationDatabaseSO' asignado está vacío. Ve al asset y añade las partes del cuerpo (Body, Eyes, etc.) a la lista 'Customization Parts'.", this.gameObject);
-            confirmButton.interactable = false; // Desactivar para prevenir errores
-            return;
-        }
-
-        namePanel.SetActive(true);
-        lobbyPanel.SetActive(false);
 
         currentSelections = new List<int>();
         for (int i = 0; i < database.customizationParts.Count; i++)
         {
             currentSelections.Add(0);
-            int index = i;
-            nextButtons[i].onClick.AddListener(() => NextOption(index));
-            previousButtons[i].onClick.AddListener(() => PreviousOption(index));
         }
+    }
+
+    void Start()
+    {
+        if (database == null) return;
 
         confirmButton.onClick.AddListener(OnConfirm);
         nameInputField.onValueChanged.AddListener(ValidateInput);
 
+        for (int i = 0; i < nextButtons.Count; i++)
+        {
+            int index = i;
+            nextButtons[i].onClick.AddListener(() => NextOption(index));
+            previousButtons[i].onClick.AddListener(() => PreviousOption(index));
+        }
+    }
+
+    private void OnEnable()
+    {
+        SetupPreview();
         UpdateAllUI();
-        ValidateInput("");
+    }
+
+    private void OnDisable()
+    {
+        CleanUpPreview();
+    }
+
+    private void SetupPreview()
+    {
+        if (playerPrefab == null || previewParent == null) return;
+
+        GameObject previewInstance = Instantiate(playerPrefab, previewParent);
+
+
+        if (previewInstance.TryGetComponent<NetworkObject>(out var netObj))
+        {
+            Destroy(netObj);
+        }
+
+        // El resto del código para ajustar la capa y obtener el customizer funciona igual.
+        foreach (Transform child in previewInstance.GetComponentsInChildren<Transform>())
+        {
+            child.gameObject.layer = previewParent.gameObject.layer;
+        }
+
+        previewCustomizer = previewInstance.GetComponent<CharacterCustomizer>();
+        UpdatePreviewAppearance();
+    }
+
+
+    private void CleanUpPreview()
+    {
+        if (previewCustomizer != null)
+        {
+            Destroy(previewCustomizer.gameObject);
+            previewCustomizer = null;
+        }
+    }
+
+    private void UpdatePreviewAppearance()
+    {
+        if (previewCustomizer == null) return;
+
+        PlayerAppearanceData data = new PlayerAppearanceData
+        {
+            selectedIndices = string.Join(",", currentSelections)
+        };
+
+        previewCustomizer.ApplyCustomization(data);
     }
 
     public void NextOption(int partIndex)
@@ -62,6 +118,7 @@ public class NameSelector : MonoBehaviour
             currentSelections[partIndex] = 0;
         }
         UpdateUIForPart(partIndex);
+        UpdatePreviewAppearance();
     }
 
     public void PreviousOption(int partIndex)
@@ -72,6 +129,7 @@ public class NameSelector : MonoBehaviour
             currentSelections[partIndex] = database.customizationParts[partIndex].skinOptionNames.Count - 1;
         }
         UpdateUIForPart(partIndex);
+        UpdatePreviewAppearance();
     }
 
     private void UpdateUIForPart(int partIndex)

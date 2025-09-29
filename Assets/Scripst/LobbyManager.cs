@@ -135,7 +135,10 @@ public class LobbyManager : NetworkBehaviour
             GameDataPersistence.Instance.SetPlayerData(player.ClientId, player.PlayerName.ToString(), player.Appearance);
         }
 
+        NetworkObject.Despawn(true);
+
         NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+
     }
     [ServerRpc(RequireOwnership = false)]
     public void UpdatePlayerDetailsServerRpc(string newName, PlayerAppearanceData appearanceData, ServerRpcParams serverRpcParams = default)
