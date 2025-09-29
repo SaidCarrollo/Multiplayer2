@@ -2039,7 +2039,7 @@ MonoBehaviour:
   - {fileID: 378389269}
   - {fileID: 432193204}
   - {fileID: 700512932}
-  playerPrefab: {fileID: 8230766273605467533, guid: ffd110f01222ea943bc4b2bd2524f1d9, type: 3}
+  playerPrefab: {fileID: 8230766273605467533, guid: 01416e030d76cd7418c3022be07fb818, type: 3}
   previewParent: {fileID: 1283486004}
 --- !u!4 &804521192
 Transform:

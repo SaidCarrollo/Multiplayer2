@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -24,12 +24,13 @@ public class NameSelector : MonoBehaviour
 
     private List<int> currentSelections;
     private CharacterCustomizer previewCustomizer;
+    private GameObject previewInstance; // Referencia al objeto de vista previa
 
     void Awake()
     {
         if (database == null)
         {
-            Debug.LogError("¡La base de datos de personalización no está asignada en el Inspector!", this);
+            Debug.LogError("Â¡La base de datos de personalizaciÃ³n no estÃ¡ asignada en el Inspector!", this);
             return;
         }
 
@@ -47,55 +48,31 @@ public class NameSelector : MonoBehaviour
         confirmButton.onClick.AddListener(OnConfirm);
         nameInputField.onValueChanged.AddListener(ValidateInput);
 
+        // Instanciamos el prefab y guardamos la referencia
+        previewInstance = Instantiate(playerPrefab, previewParent);
+
+        // Intentamos quitar el NetworkObject para que sea un objeto puramente local
+        if (previewInstance.TryGetComponent<NetworkObject>(out var netObj))
+        {
+            Destroy(netObj);
+        }
+
+        previewCustomizer = previewInstance.GetComponent<CharacterCustomizer>();
+        UpdatePreviewAppearance();
+
+        InitializeUI();
+    }
+
+    private void InitializeUI()
+    {
         for (int i = 0; i < nextButtons.Count; i++)
         {
             int index = i;
             nextButtons[i].onClick.AddListener(() => NextOption(index));
             previousButtons[i].onClick.AddListener(() => PreviousOption(index));
         }
-    }
-
-    private void OnEnable()
-    {
-        SetupPreview();
         UpdateAllUI();
-    }
-
-    private void OnDisable()
-    {
-        CleanUpPreview();
-    }
-
-    private void SetupPreview()
-    {
-        if (playerPrefab == null || previewParent == null) return;
-
-        GameObject previewInstance = Instantiate(playerPrefab, previewParent);
-
-
-        if (previewInstance.TryGetComponent<NetworkObject>(out var netObj))
-        {
-            Destroy(netObj);
-        }
-
-        // El resto del código para ajustar la capa y obtener el customizer funciona igual.
-        foreach (Transform child in previewInstance.GetComponentsInChildren<Transform>())
-        {
-            child.gameObject.layer = previewParent.gameObject.layer;
-        }
-
-        previewCustomizer = previewInstance.GetComponent<CharacterCustomizer>();
-        UpdatePreviewAppearance();
-    }
-
-
-    private void CleanUpPreview()
-    {
-        if (previewCustomizer != null)
-        {
-            Destroy(previewCustomizer.gameObject);
-            previewCustomizer = null;
-        }
+        ValidateInput(nameInputField.text);
     }
 
     private void UpdatePreviewAppearance()
@@ -106,7 +83,6 @@ public class NameSelector : MonoBehaviour
         {
             selectedIndices = string.Join(",", currentSelections)
         };
-
         previewCustomizer.ApplyCustomization(data);
     }
 
@@ -160,5 +136,11 @@ public class NameSelector : MonoBehaviour
 
         namePanel.SetActive(false);
         lobbyPanel.SetActive(true);
+
+
+        if (previewInstance != null)
+        {
+            Destroy(previewInstance);
+        }
     }
 }
