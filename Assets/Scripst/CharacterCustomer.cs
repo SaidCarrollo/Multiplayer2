@@ -1,69 +1,139 @@
-// CharacterCustomizer.cs
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 
 public class CharacterCustomizer : NetworkBehaviour
 {
-    [SerializeField] private CustomizationDatabaseSO customizationDatabase;
-    [SerializeField] private List<Transform> partParents;
+    [SerializeField] public CustomizationDatabaseSO customizationDatabase; // Cambiado a public
+    [SerializeField] public List<Transform> partParents; // Cambiado a public
 
     public NetworkVariable<PlayerAppearanceData> appearanceData = new(
         default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    private bool customizationApplied = false;
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log($"CharacterCustomizer OnNetworkSpawn para cliente {OwnerClientId} - IsOwner: {IsOwner}, IsHost: {IsHost}");
 
-        appearanceData.OnValueChanged += (prev, current) => ApplyCustomization(current);
+        // Solo suscribirse a cambios si es un objeto de red real
+        if (IsSpawned)
+        {
+            appearanceData.OnValueChanged += OnAppearanceDataChanged;
+        }
 
+        // Aplicar personalización inicial si hay datos
         if (!string.IsNullOrEmpty(appearanceData.Value.selectedIndices.ToString()))
         {
+            Debug.Log($"Aplicando personalización inicial para {(IsSpawned ? "jugador en red" : "preview")}: {appearanceData.Value.selectedIndices}");
             ApplyCustomization(appearanceData.Value);
+            customizationApplied = true;
+        }
+        else
+        {
+            Debug.LogWarning($"No hay datos de personalización iniciales para {(IsSpawned ? "jugador en red" : "preview")}");
         }
     }
 
+    private void Start()
+    {
+        // Para el preview (que no es un NetworkObject), aplicar personalización si no se ha aplicado
+        if (!IsSpawned && !customizationApplied)
+        {
+            Debug.Log("CharacterCustomizer iniciado para preview");
+            // El preview se manejará mediante llamadas directas a ApplyCustomization
+        }
+    }
+
+    private void OnAppearanceDataChanged(PlayerAppearanceData previous, PlayerAppearanceData current)
+    {
+        Debug.Log($"Datos de apariencia cambiados para cliente {OwnerClientId}: {current.selectedIndices}");
+
+        // Evitar aplicar duplicados si ya se aplicó
+        if (!customizationApplied || !current.Equals(previous))
+        {
+            ApplyCustomization(current);
+            customizationApplied = true;
+        }
+    }
 
     public void ApplyCustomization(PlayerAppearanceData data)
     {
         string indicesStrValue = data.selectedIndices.ToString();
 
-        // MODIFICACIÓN: Hacemos el mensaje más descriptivo.
         if (string.IsNullOrEmpty(indicesStrValue))
         {
-            // Este nuevo mensaje te dirá inmediatamente que los datos no llegaron desde el lobby.
-            Debug.LogWarning($"Client {OwnerClientId}: No customization data was provided from the lobby. Appearance will be default.");
+            Debug.LogWarning($"{(IsSpawned ? $"Cliente {OwnerClientId}" : "Preview")}: No hay datos de personalización. Usando apariencia por defecto.");
             return;
         }
 
-        Debug.Log($"Applying customization for client {OwnerClientId} with indices: {indicesStrValue}");
+        Debug.Log($"Aplicando personalización para {(IsSpawned ? $"cliente {OwnerClientId}" : "preview")} con índices: {indicesStrValue}");
 
         string[] indicesStr = indicesStrValue.Split(',');
-        if (indicesStr.Length != partParents.Count)
+
+        // Verificar consistencia de datos
+        if (partParents == null || partParents.Count == 0)
         {
-            // Este error también es muy útil para diagnosticar problemas de configuración.
-            Debug.LogError($"CRITICAL MISMATCH on Client {OwnerClientId}: Received {indicesStr.Length} customization indices, but the prefab has {partParents.Count} parts to customize. Check your database and prefab configuration.");
+            Debug.LogError($"ERROR: partParents no está asignado o está vacío");
             return;
         }
 
-        // --- NUEVO LOG DE DIAGNÓSTICO ---
-        Debug.Log($"Received {indicesStr.Length} indices. Expecting {partParents.Count} parts.");
-
         if (indicesStr.Length != partParents.Count)
         {
-            Debug.LogError("¡ERROR CRÍTICO! El número de índices de personalización no coincide con el número de partes del personaje. No se puede aplicar la apariencia.");
+            Debug.LogError($"ERROR: Se recibieron {indicesStr.Length} índices pero se esperaban {partParents.Count}. Datos: {indicesStrValue}");
             return;
         }
 
+        // Aplicar personalización a cada parte
         for (int i = 0; i < partParents.Count; i++)
         {
+            if (partParents[i] == null)
+            {
+                Debug.LogWarning($"PartParents[{i}] es null");
+                continue;
+            }
+
             if (int.TryParse(indicesStr[i], out int selectedIndex))
             {
-                for (int j = 0; j < partParents[i].childCount; j++)
-                {
-                    partParents[i].GetChild(j).gameObject.SetActive(j == selectedIndex);
-                }
+                ApplyPartCustomization(i, selectedIndex);
+            }
+            else
+            {
+                Debug.LogError($"No se pudo parsear el índice: {indicesStr[i]}");
             }
         }
+
+        Debug.Log($"Personalización aplicada correctamente para {(IsSpawned ? $"cliente {OwnerClientId}" : "preview")}");
+        customizationApplied = true;
+    }
+
+    private void ApplyPartCustomization(int partIndex, int selectedIndex)
+    {
+        Transform partParent = partParents[partIndex];
+
+        // Verificar que el índice esté dentro del rango
+        if (selectedIndex < 0 || selectedIndex >= partParent.childCount)
+        {
+            Debug.LogWarning($"Índice {selectedIndex} fuera de rango para parte {partIndex} (rango: 0-{partParent.childCount - 1}). Usando 0.");
+            selectedIndex = 0;
+        }
+
+        for (int j = 0; j < partParent.childCount; j++)
+        {
+            GameObject child = partParent.GetChild(j).gameObject;
+            if (child != null)
+            {
+                child.SetActive(j == selectedIndex);
+            }
+        }
+    }
+
+    public override void OnDestroy()
+    {
+        if (appearanceData != null && IsSpawned)
+        {
+            appearanceData.OnValueChanged -= OnAppearanceDataChanged;
+        }
+        base.OnDestroy();
     }
 }

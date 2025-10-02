@@ -1,4 +1,3 @@
-// GameDataPersistence.cs
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,10 +5,8 @@ public class GameDataPersistence : MonoBehaviour
 {
     public static GameDataPersistence Instance { get; private set; }
 
-    // Asigna tus prefabs de jugador en el Inspector
-    public GameObject playerPrefab; // Un solo prefab de jugador
+    public GameObject playerPrefab;
 
-    // Diccionarios para guardar los datos de cada jugador
     private Dictionary<ulong, string> playerNames = new Dictionary<ulong, string>();
     private Dictionary<ulong, PlayerAppearanceData> playerAppearances = new Dictionary<ulong, PlayerAppearanceData>();
 
@@ -18,22 +15,48 @@ public class GameDataPersistence : MonoBehaviour
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
-        else
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        Debug.Log("GameDataPersistence inicializado");
     }
 
-    // Métodos para guardar los datos
     public void SetPlayerData(ulong clientId, string name, PlayerAppearanceData appearance)
     {
         playerNames[clientId] = name;
         playerAppearances[clientId] = appearance;
+
+        Debug.Log($"Datos guardados para cliente {clientId}: {name}, Apariencia: {appearance.selectedIndices}");
     }
 
-    // Métodos para obtener los datos
-    public string GetPlayerName(ulong clientId) => playerNames.GetValueOrDefault(clientId, "Player");
-    public PlayerAppearanceData GetPlayerAppearance(ulong clientId) => playerAppearances.GetValueOrDefault(clientId);
+    public string GetPlayerName(ulong clientId)
+    {
+        if (playerNames.TryGetValue(clientId, out string name))
+        {
+            return name;
+        }
+        return $"Player_{clientId}";
+    }
+
+    public PlayerAppearanceData GetPlayerAppearance(ulong clientId)
+    {
+        if (playerAppearances.TryGetValue(clientId, out PlayerAppearanceData appearance))
+        {
+            return appearance;
+        }
+
+        // Devolver apariencia por defecto si no se encuentra
+        Debug.LogWarning($"No se encontró apariencia para cliente {clientId}, usando valores por defecto");
+        return new PlayerAppearanceData { selectedIndices = "0,0,0,0" };
+    }
+
+    public void ClearData()
+    {
+        playerNames.Clear();
+        playerAppearances.Clear();
+        Debug.Log("Datos de GameDataPersistence limpiados");
+    }
 }
